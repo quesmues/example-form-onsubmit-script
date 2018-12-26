@@ -1,0 +1,153 @@
+{% extends 'layout.html' %}
+{% block body %} {% from "includes/_formhelpers.html" import render_field %}
+
+<div class="validacao-massa">
+	<div class="container">
+        <div class="page-title">
+            <h4 style="color: #fff; margin: 0px;"><i class="fas fa-caret-right"></i> Buscador de Erros</h4>
+        </div>
+        <div class="page-header">
+            <div class="row">
+                <!-- DIV PARA CARREGAR O LOADER -->
+			<div id="loading" class="loading-gif loader display-block"></div>
+			<h1 id="loading-text" class="loading-text display-block">Carregando</h1>
+                <div class="col-md-12">
+                    <div class="form-inline display-none">
+                        <form class="form-group" data-toggle="validator" action="/ngin/buscador-de-erros/" method="post" style="margin:0px;">
+                            {{render_field(form.search, class_="form-control")}}
+                            <input type="submit" onclick="clickButton2()" id="validar" class="btn btn-primary" value="Buscar" />
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+		<!-- DIV PARA CARREGAR A MENSSAGEM DE ERRO -->
+		<div class="error_ display-none"></div>
+
+        <div class="display-none">
+			{% if respostas is defined %}
+			<div class="esconde">
+				<div class="row">
+					<div class="col-md-12">
+						<!-- ABA ERROS -->
+						<ul class="nav nav-tabs tabs">
+							<li class="active"><a href="#">Erros</a></li>
+						</ul>
+						<!-- TABELA DESCRICAO ERRO -->
+						<table class="table table-hover table-line">
+							<thead>
+								<tr>
+									<th scope="col">Codigo</th>
+									<th scope="col">Erro</th>
+                                    <th scope="col">Grupo</th>
+                                    <th scope="col">Arquivo</th>
+									<th scope="col">Sugestões de correção</th>
+								</tr>
+							</thead>
+							<tbody>
+                                {% for resposta in respostas %}
+								<tr>
+									<td>{{resposta.codigo}}</td>
+									<td>{{resposta.descricao}}</td>
+                                    <td>{{resposta.grupo}}</td>
+                                    <td>{{resposta.file}}</td>
+									{% if resposta.sugestao %}
+									<td>
+										<form onsubmit="return enviar(event, {{loop.index}})">
+											<input type="text" name="codigoErro" value="{{resposta.codigo}}" hidden/>
+											<input type="text" name="file" value="{{resposta.file}}" hidden/>
+											<input type="text" name="sugestao" value="{{resposta.sugestao}}" disabled/>
+											<input type="button" onclick="addit({{loop.index}})" name="cadastrar" class="btn btn-primary" value="Cadastrar" style="display: none;"/>
+											<input type="button" onclick="addit({{loop.index}})"  name="editar" class="btn btn-primary" value="Editar" style="display: none;"/>
+											<input type="submit" onclick="save({{loop.index}})" name="salvar" class="btn btn-primary" value="Salvar" style="display: none;"/>
+										</form>
+									</td>
+									{% else %}
+									<td>
+										<form onsubmit="return enviar(event, {{loop.index}})">
+											<input type="text" name="codigoErro" value="{{resposta.codigo}}" hidden/>
+											<input type="text" name="file" value="{{resposta.file}}" hidden/>
+											<input type="text" name="sugestao" value="" disabled/>
+											<input type="button" onclick="addit({{loop.index}})" name="cadastrar" class="btn btn-primary" value="Cadastrar" style="display: none;"/>
+											<input type="button" onclick="addit({{loop.index}})" name = "editar"  class="btn btn-primary" value="Editar" style="display: none;"/>
+											<input type="submit" onclick="save({{loop.index}})" name="salvar"  class="btn btn-primary" value="Salvar" style="display: none;"/>
+										</form>
+									</td>
+									{% endif%}
+								</tr>
+                                {% endfor %}
+							</tbody>
+						</table>
+                        {%endif%}
+					</div>
+				</div>
+			</div>
+        </div>
+        </div>
+	</div>
+</div>
+
+<script>
+
+$(document).ready(function() {
+
+		//Função Ajax para multiplos forms com jinja2
+    	enviar = function(e, arg) {
+    	console.log(arg)
+    	console.log(e)
+        $.ajax({
+            data: {
+                codigoErro: $("input[name='codigoErro']")[arg-1].value,
+                sugestao: $("input[name='sugestao']")[arg-1].value,
+                file: $("input[name='file']")[arg-1].value
+            },
+            type: 'POST',
+            url: '/api/'
+        });
+        e.preventDefault();
+        return false;
+    	};
+
+    	function id(elemento) {
+			return document.getElementsByName(elemento);
+		}
+
+		for (i=0;i<id('sugestao').length;i++){
+		if ( id('sugestao')[i].value  == 0){
+			id('cadastrar')[i].style.display = 'flex';
+		}
+		else {
+			id('editar')[i].style.display = 'flex';
+		}}
+
+		addit = function(arg){
+			arg = arg-1
+			id('sugestao')[arg].disabled = false;
+			id('cadastrar')[arg].style.display = 'none';
+			id('editar')[arg].style.display = 'none';
+			id('salvar')[arg].style.display = 'flex';
+		}
+
+
+		save = function(erg){
+		erg = erg-1
+		if ( id('sugestao')[erg].value  == 0){
+			id('cadastrar')[erg].style.display = 'flex';
+			id('sugestao')[erg].disabled = true;
+			id('salvar')[erg].style.display = 'none';
+		}
+		else {
+			id('editar')[erg].style.display = 'flex';
+			id('sugestao')[erg].disabled = true;
+			id('salvar')[erg].style.display = 'none';
+		}
+		}
+
+
+
+});
+
+</script>
+
+
+{% endblock %}
